@@ -1,0 +1,1083 @@
+# CIS 591 Journal Assistant
+## V1 Application Specification v0.1
+
+**Status:** Draft specification for implementation  
+**Database:** Schema v0.2 — validated and temporarily frozen  
+**Purpose:** Private personal documentation; not intended for course submission
+
+---
+
+# 1. Purpose
+
+The CIS 591 Journal Assistant is a private, human-controlled AI journaling application designed to help Madie document, understand, and later explain her work on the CIS 591 project.
+
+The application should help preserve:
+
+- personal contributions;
+- team activity where relevant;
+- technical and business decisions;
+- reasoning and tradeoffs;
+- problems and failures;
+- learning moments;
+- collaboration experiences;
+- quantitative project results;
+- unresolved questions;
+- near-term goals;
+- and potentially useful interview evidence.
+
+The objective is not to automatically make the user's work sound impressive. The objective is to preserve sufficiently accurate evidence and reasoning that the user can later explain the project confidently and accurately.
+
+The application is a **documentation copilot**, not an autonomous documentation agent.
+
+---
+
+# 2. Primary User
+
+V1 has one user:
+
+**Madie**
+
+The application is not currently designed as a multi-user product.
+
+References to "the user" in this specification therefore mean Madie unless otherwise stated.
+
+---
+
+# 3. Core Product Principle
+
+The application follows:
+
+**Evidence → AI interpretation → User review → Approved documentation**
+
+rather than:
+
+**AI interpretation → assumed truth → automatic documentation**
+
+The system must preserve a distinction between:
+
+1. what a source actually says;
+2. what the AI infers from that source;
+3. structured claims derived from evidence;
+4. conflicting evidence;
+5. Madie's explicit clarification;
+6. generated documentation.
+
+Generated documentation must never become authoritative merely because the AI previously generated it.
+
+---
+
+# 4. Goals
+
+V1 should:
+
+- conduct guided project check-ins;
+- preserve the original conversation;
+- identify meaningful claims without treating every sentence as a claim;
+- distinguish Madie's work from team or teammate work;
+- maintain provenance connecting claims to their supporting/contradicting sources;
+- retrieve relevant historical context;
+- identify conflicting evidence;
+- ask Madie to resolve meaningful contradictions;
+- preserve Madie's resolutions;
+- produce concise standup notes;
+- produce a short daily reflection;
+- identify potentially strong interview stories when warranted;
+- allow Madie to review generated documentation;
+- write approved documentation to a private Google Doc;
+- and prevent autonomous/background documentation.
+
+---
+
+# 5. Explicit Non-Goals for V1
+
+V1 will **not** initially include:
+
+- autonomous/background check-ins;
+- scheduled documentation generation;
+- automatic Google Docs writes without approval;
+- multi-user support;
+- autonomous resolution of conflicting evidence;
+- a knowledge graph;
+- a multi-agent architecture;
+- LangChain/LangGraph unless later requirements justify them;
+- vector retrieval/embeddings unless simpler retrieval proves inadequate;
+- detailed quantitative-metric normalization;
+- comprehensive event sourcing;
+- sophisticated confidence scoring;
+- autonomous resume-bullet generation during every check-in;
+- or mandatory STAR stories for every day.
+
+These features may be reconsidered if implementation or observed usage establishes a need.
+
+---
+
+# 6. Primary User Workflow
+
+## 6.1 Starting a check-in
+
+Madie enters the dedicated journal interface/chat and types:
+
+**Start**
+
+The assistant begins approximately:
+
+> Hi, what did you do today for your project?
+
+The user provides an initial summary.
+
+---
+
+# 7. Guided Check-In
+
+The assistant should explore the following categories:
+
+1. What did you complete today?
+2. What did you struggle with today?
+3. Did you have any learning moments?
+4. What is something you're proud of yourself for doing?
+5. Did you work with anyone on the team today? If so, what was that like?
+6. Do you have a goal for what you want to do or complete in the near future?
+7. Is there anything else you want to document?
+
+The user may answer:
+
+- `N/A`
+- `Nothing new`
+- `Skip`
+- or equivalent language.
+
+The assistant should accept these answers and continue without forcing content.
+
+## 7.1 Conversational behavior
+
+The categories are **coverage requirements, not a rigid questionnaire**.
+
+When an answer exposes an important:
+
+- decision;
+- failure;
+- misunderstanding;
+- technical issue;
+- disagreement;
+- tradeoff;
+- change in requirements;
+- business consideration;
+- debugging experience;
+- learning moment;
+- or ambiguity in ownership,
+
+the assistant should ask relevant follow-up questions.
+
+Useful reasoning structure:
+
+**Context → Decision → Reasoning → Implementation → Result → Learning**
+
+The assistant should prioritize understanding over mechanically completing all questions.
+
+---
+
+# 8. Sources
+
+A `Source` represents one complete evidence artifact available to the system.
+
+For V1:
+
+- one individual check-in = one Source;
+- one uploaded document = one Source.
+
+Examples:
+
+- October 27 Check-In;
+- CIS 591 Syllabus;
+- Project Architecture PDF;
+- Sponsor Requirements Document.
+
+Subcomponents such as statements, pages, passages, and excerpts are **locations within a Source**, not independent Sources.
+
+Uploaded documents should retain a durable `storage_reference` identifying the underlying stored file.
+
+---
+
+# 9. Source-of-Truth Hierarchy
+
+The system should use the following conceptual hierarchy.
+
+## 9.1 Project/class documents
+
+Authoritative for documented:
+
+- course requirements;
+- project requirements;
+- documented architecture;
+- documented team decisions;
+- and other information explicitly contained in those artifacts.
+
+## 9.2 Madie's check-in statements
+
+Primary evidence for:
+
+- Madie's personal contribution;
+- Madie's reasoning;
+- Madie's experience;
+- Madie's interpretation;
+- Madie's learning;
+- and what Madie personally recalls occurring.
+
+## 9.3 Previous generated outputs
+
+Useful historical context, but **not primary evidence**.
+
+Generated summaries cannot independently establish new historical facts.
+
+## 9.4 Model inference
+
+Inference may:
+
+- suggest a possible interpretation;
+- identify a possible Claim;
+- identify a possible contradiction;
+- or trigger a follow-up question.
+
+Inference must not silently become established fact.
+
+When required information is missing, preserve the uncertainty or ask Madie.
+
+---
+
+# 10. Check-In Statements
+
+Every conversational contribution during a check-in is stored as a `CheckInStatement`.
+
+A statement records:
+
+- its CheckIn;
+- Speaker;
+- statement text;
+- conversational order;
+- and creation timestamp.
+
+`Speaker` and `Actor` are deliberately different concepts.
+
+## Speaker
+
+Who produced a conversational statement.
+
+V1 Speakers:
+
+- Madie
+- ChatGPT
+
+## Actor
+
+A person/group/entity performing an action represented by a Claim.
+
+Examples:
+
+- Madie;
+- Jordan;
+- project team;
+- sponsor;
+- another classmate.
+
+A statement spoken by Madie can describe multiple Actors.
+
+A statement spoken by ChatGPT does **not** independently establish that Madie performed an action.
+
+---
+
+# 11. Claims
+
+A Claim is a meaningful assertion worth preserving.
+
+The conceptual anatomy of a Claim is:
+
+**[actor(s)] [verb] [direct object] [context]**
+
+The system also preserves the complete natural-language `claim_text`.
+
+Claims should generally be atomic.
+
+For example:
+
+> "I wrote the validation logic while Jordan implemented the Supabase authentication calls."
+
+should preferably produce:
+
+- Madie wrote the validation logic.
+- Jordan implemented the Supabase authentication calls.
+
+rather than one compound Claim.
+
+---
+
+# 12. What Becomes a Claim
+
+A statement deserves Claim extraction when it contains:
+
+## 12.1 Ownership, responsibility, or decision-making
+
+Examples:
+
+- Madie implemented X.
+- Jordan debugged Y.
+- Madie proposed Z.
+- The team selected architecture A.
+
+## 12.2 Quantitative events/results
+
+Examples:
+
+- 12 of 20 test cases passed.
+- Four users completed the workflow.
+- Three bugs remained after testing.
+
+A quantitative Claim may legitimately have zero Actors.
+
+## 12.3 Explicit user designation
+
+If Madie explicitly says that something should be treated as a Claim, the system should preserve it as one even when it does not fit another special category.
+
+---
+
+# 13. Claim Types
+
+V1 supports:
+
+- `ownership_responsibility`
+- `decision`
+- `quantitative_event`
+- `other`
+
+`other` allows explicitly designated or otherwise meaningful Claims that do not fit the first three categories.
+
+---
+
+# 14. Claim Creation Methods
+
+Claim type and creation method are separate concepts.
+
+Creation methods:
+
+- `auto_extracted`
+- `user_designated`
+- `user_clarification`
+
+Example:
+
+A user may explicitly designate a decision as important.
+
+That produces:
+
+`claim_type = decision`
+
+and:
+
+`creation_method = user_designated`
+
+---
+
+# 15. Actors
+
+Actors are separate entities.
+
+One Claim may contain:
+
+**0..many Actors**
+
+One Actor may participate in:
+
+**0..many Claims**
+
+The many-to-many relationship is represented through `ClaimActor`.
+
+Actors are not interchangeable with conversational Speakers.
+
+---
+
+# 16. Claim Evidence
+
+Claims and Sources have a many-to-many relationship represented by `ClaimEvidence`.
+
+`ClaimEvidence` answers:
+
+> How does this Source provide evidence about this Claim?
+
+V1 evidence relationships:
+
+- `supports`
+- `contradicts`
+
+Evidence may identify:
+
+- the Source;
+- a specific CheckInStatement;
+- a document location;
+- and/or a relevant evidence excerpt.
+
+One CheckInStatement may provide evidence for multiple Claims.
+
+One Claim may have evidence from multiple Sources.
+
+One Source may provide evidence for multiple Claims.
+
+---
+
+# 17. Evidence Integrity Rules
+
+## CE-1 — Source/Statement consistency
+
+When `ClaimEvidence.statement_id` is non-null, that CheckInStatement must belong to the CheckIn represented by the referenced Source.
+
+## CE-2 — Source-type consistency
+
+`ClaimEvidence.statement_id` may only be populated when the referenced Source is a `check_in`.
+
+Uploaded-document evidence must not reference a CheckInStatement.
+
+## CE-3 — Document evidence location
+
+Uploaded-document evidence should preserve a meaningful `source_location` whenever possible.
+
+Examples:
+
+- page;
+- section;
+- paragraph;
+- line range;
+- other retrievable location.
+
+## CE-4 — AI ownership limitation
+
+A ChatGPT-generated statement cannot independently establish Madie's ownership/responsibility for work.
+
+If ChatGPT infers personal ownership that Madie has not established, the assistant should ask for clarification.
+
+---
+
+# 18. Contradiction Detection
+
+The system should identify potentially conflicting Claims/evidence.
+
+Example:
+
+**Claim**
+
+Madie implemented authentication.
+
+**Supporting evidence**
+
+October 20 Check-In.
+
+**Contradicting evidence**
+
+Team development notes.
+
+The system must not silently choose whichever source appears more convincing.
+
+Instead, it should present:
+
+- the disputed Claim;
+- supporting evidence;
+- contradicting evidence;
+- where each piece of evidence originated;
+- and relevant excerpts/locations.
+
+Madie is then asked for clarification.
+
+---
+
+# 19. Claim Status
+
+V1 Claim statuses:
+
+- `supported`
+- `disputed`
+- `unresolved`
+- `rejected`
+
+A Claim may move to `disputed` when conflicting evidence is detected.
+
+An unresolved Claim should not be presented as established historical fact.
+
+---
+
+# 20. Claim Resolution
+
+Evidence and human judgment are intentionally modeled separately.
+
+`ClaimEvidence` answers:
+
+> What does the evidence say?
+
+`ClaimResolution` answers:
+
+> What did Madie decide after reviewing the issue?
+
+Only Madie's explicit clarification may authorize a ClaimResolution.
+
+The AI may:
+
+- detect a conflict;
+- explain the conflict;
+- retrieve relevant evidence;
+- and ask for clarification.
+
+The AI may **not independently create a final resolution**.
+
+A resolution records:
+
+- the Claim being resolved;
+- the CheckInStatement containing Madie's clarification;
+- Madie as the resolving Actor;
+- resolution type;
+- and creation timestamp.
+
+V1 resolution types:
+
+- `confirm`
+- `reject`
+- `supersede`
+
+Rejected historical Claims are preserved rather than deleted so that the system retains an audit trail.
+
+Replacement-Claim relationships beyond this are deferred until an actual need is demonstrated.
+
+---
+
+# 21. Generated Outputs
+
+After a sufficiently complete check-in, the application generates three possible outputs.
+
+## 21.1 Standup Notes
+
+Exactly three concise categories:
+
+- **Completed**
+- **Struggling**
+- **Next**
+
+These should be suitable for Madie to review immediately before a project standup.
+
+## 21.2 Daily Reflection
+
+A concise 3–6 sentence summary covering the most meaningful aspects of the check-in.
+
+It should prioritize:
+
+- actual contribution;
+- relevant difficulty;
+- learning;
+- collaboration;
+- and near-term direction.
+
+It should not artificially convert ordinary work into impressive résumé language.
+
+## 21.3 Interview Story Candidate
+
+The system should produce STAR-like documentation **only when the available evidence supports a meaningful story**.
+
+Potential structure:
+
+- Situation
+- Task
+- Action
+- Result
+- Learning
+
+The additional Learning component is intentionally useful for early-career reflection.
+
+If no meaningful story exists:
+
+`star_notes = NULL`
+
+The application must not manufacture an interview story merely to populate the field.
+
+---
+
+# 22. Generated Output Provenance
+
+A `GeneratedOutput` may reference multiple Claims through `GeneratedOutputClaim`.
+
+One Claim may inform multiple GeneratedOutputs.
+
+Generated documentation is a **derived artifact**.
+
+It does not become evidence merely because it exists.
+
+---
+
+# 23. Approval Boundary
+
+Generated documentation has an approval state.
+
+Conceptual workflow:
+
+**Generate → Review → Revise if needed → Explicit approval → Persist externally**
+
+The LLM does not have authority to bypass approval.
+
+No output may be written to Google Docs without Madie's explicit approval.
+
+This restriction must be enforced by application logic rather than relying solely on prompt instructions.
+
+---
+
+# 24. Google Docs Output
+
+The desired human-readable destination is one private Google Document containing three separate document tabs:
+
+## Tab 1 — Standup Notes
+
+Dated entries containing:
+
+- Completed
+- Struggling
+- Next
+
+## Tab 2 — Daily Reflections
+
+Dated 3–6 sentence reflections.
+
+## Tab 3 — Interview Story Bank
+
+Only sufficiently supported interview-story candidates are appended.
+
+Days without a meaningful candidate should not create filler STAR entries.
+
+Google Docs is the **human-readable documentation destination**, not the application's primary database.
+
+---
+
+# 25. Database
+
+Structured application state is stored separately from Google Docs.
+
+Schema v0.2 contains ten entities:
+
+### Source/evidence layer
+
+- `Source`
+- `CheckIn`
+- `CheckInStatement`
+
+### Knowledge/provenance layer
+
+- `Claim`
+- `Actor`
+- `ClaimActor`
+- `ClaimEvidence`
+- `ClaimResolution`
+
+### Generated-output layer
+
+- `GeneratedOutput`
+- `GeneratedOutputClaim`
+
+Schema v0.2 is temporarily frozen.
+
+It should only be changed if implementation or testing exposes an actual requirement that cannot be represented cleanly.
+
+---
+
+# 26. Source Storage
+
+`Source.storage_reference` is nullable `TEXT`.
+
+For uploaded documents, it should contain a durable storage identifier/object path rather than a temporary signed URL where possible.
+
+For CheckIn Sources:
+
+`storage_reference = NULL`
+
+because the associated CheckIn and CheckInStatements provide the underlying content.
+
+---
+
+# 27. Initial Context/Retrieval Strategy
+
+V1 should **not begin with vector retrieval**.
+
+Initial context assembly should use:
+
+- the current check-in;
+- a bounded number of recent check-ins;
+- relevant structured Claims;
+- unresolved/disputed Claims where relevant;
+- known project documents;
+- and explicitly relevant historical evidence.
+
+The application constructs an evidence packet for the LLM rather than sending the entire semester history on every request.
+
+Semantic/vector retrieval should be added only if observed retrieval failures demonstrate that simpler retrieval is inadequate.
+
+---
+
+# 28. Historical Accuracy
+
+When an earlier belief later proves incorrect:
+
+- preserve the original Claim/evidence;
+- preserve the later correction;
+- update the Claim status appropriately;
+- preserve the ClaimResolution;
+- do not rewrite historical records to make the final outcome appear inevitable.
+
+The application should make it possible to reconstruct how Madie's understanding evolved.
+
+---
+
+# 29. Human-Control Rules
+
+The following actions require explicit Madie involvement:
+
+- final resolution of conflicting evidence;
+- confirmation of ambiguous personal ownership;
+- approval of generated documentation;
+- Google Docs writes.
+
+The system should prefer:
+
+**"I don't know yet"**
+
+over an unsupported assertion.
+
+---
+
+# 30. Proposed Technical Architecture
+
+The current proposed stack is:
+
+**Frontend/application**
+Next.js + TypeScript
+
+**Structured validation**
+Zod or equivalent schema validation
+
+**Database/backend**
+Supabase / PostgreSQL
+
+**File storage**
+Supabase Storage or equivalent durable object storage
+
+**LLM**
+OpenAI API or Gemini API — final choice not yet frozen
+
+**External documentation**
+Google Docs API
+
+**Repository**
+GitHub
+
+**Deployment**
+Vercel — proposed, not yet frozen
+
+**CI/CD**
+GitHub Actions + deployment workflow — proposed for later implementation
+
+These are implementation proposals rather than immutable product requirements.
+
+---
+
+# 31. Initial Architecture
+
+Conceptually:
+
+```text
+                        Madie
+                          |
+                          v
+                    Next.js UI
+                          |
+                          v
+                 Application Layer
+                    /     |      \
+                   /      |       \
+                  v       v        v
+               LLM     Supabase   File Storage
+                         |
+                  Structured History
+                         |
+              Claims / Evidence / Sources
+                         |
+                         v
+                    Review Screen
+                         |
+                   explicit approval
+                         |
+                         v
+                  Google Docs API
+                         |
+                         v
+              Personal Journal Document
+```
+
+The LLM should not directly possess unilateral authority to write approved documentation.
+
+---
+
+# 32. Implementation Strategy
+
+Development should proceed incrementally.
+
+## Milestone 1 — Local check-in prototype
+
+Implement:
+
+`Start → guided conversation → responses → structured generated output → review`
+
+No Google Docs required.
+
+## Milestone 2 — Structured persistence
+
+Implement Schema v0.2 in Supabase/PostgreSQL.
+
+Persist:
+
+- Sources;
+- CheckIns;
+- Statements;
+- Actors;
+- Claims;
+- ClaimEvidence;
+- GeneratedOutputs.
+
+## Milestone 3 — Provenance and contradiction handling
+
+Implement:
+
+- evidence relationships;
+- relevant historical retrieval;
+- contradiction detection;
+- user clarification;
+- ClaimResolution.
+
+## Milestone 4 — Document ingestion
+
+Support uploaded project/class materials and preserve durable storage references and source locations.
+
+## Milestone 5 — Google Docs
+
+Implement explicit:
+
+`Approve → write to appropriate document tab`
+
+## Milestone 6 — Testing and CI/CD
+
+Add automated testing and deployment workflow.
+
+---
+
+# 33. Testing Requirements
+
+Testing should cover deterministic application behavior separately from probabilistic LLM behavior.
+
+Important deterministic tests include:
+
+### Authorization
+
+An unapproved GeneratedOutput cannot trigger a Google Docs write.
+
+### Evidence integrity
+
+A ClaimEvidence statement cannot reference a statement from a different CheckIn Source.
+
+### Source-type integrity
+
+An uploaded-document Source cannot use a CheckInStatement as its evidence location.
+
+### Resolution authority
+
+The model cannot independently create an authorized ClaimResolution.
+
+### Actor handling
+
+A Claim may have:
+
+- zero Actors;
+- one Actor;
+- multiple Actors.
+
+### Evidence multiplicity
+
+One Source may support multiple Claims.
+
+One Claim may have multiple supporting Sources.
+
+One Claim may simultaneously have supporting and contradicting evidence.
+
+### STAR behavior
+
+A check-in may legitimately generate no STAR story.
+
+---
+
+# 34. LLM Evaluation Requirements
+
+Because claim extraction and contradiction detection involve probabilistic AI behavior, traditional unit testing alone is insufficient.
+
+Future evaluation sets should include examples of:
+
+- clear personal ownership;
+- team ownership;
+- teammate ownership;
+- ambiguous ownership;
+- quantitative results;
+- multiple Claims in one statement;
+- non-Claim conversational statements;
+- explicit user-designated Claims;
+- conflicting evidence;
+- false apparent contradictions caused by different contexts;
+- AI-generated ownership assumptions;
+- and check-ins with no meaningful career evidence.
+
+Expected outputs should evaluate whether the system:
+
+- extracted appropriate Claims;
+- avoided unsupported Claims;
+- assigned appropriate Actors;
+- preserved context;
+- detected relevant contradictions;
+- avoided false contradictions;
+- and asked for clarification when necessary.
+
+---
+
+# 35. Security and Privacy Considerations
+
+The application contains personal reflection and potentially sponsor/project materials.
+
+V1 should therefore:
+
+- keep secrets/API keys out of client-side code;
+- avoid placing restricted information into unauthorized AI services;
+- use appropriately scoped credentials;
+- restrict access to stored documents;
+- avoid storing temporary signed URLs as permanent file identity;
+- and maintain human control over external writes.
+
+Exact authentication and authorization architecture remains to be designed.
+
+---
+
+# 36. Relationship to CIS 591 Learning Goals
+
+Although this application is a personal side tool rather than a course submission, its architecture provides an environment for practicing:
+
+- requirements engineering;
+- relational data modeling;
+- provenance;
+- context engineering;
+- retrieval;
+- structured outputs;
+- bounded AI behavior;
+- human-in-the-loop control;
+- API integration;
+- testing;
+- deployment;
+- and eventually CI/CD.
+
+The application should remain useful first; additional technologies should not be introduced merely to make the architecture appear sophisticated.
+
+---
+
+# 37. Deferred Features
+
+The following should remain deferred until evidence justifies them:
+
+- vector embeddings;
+- semantic RAG;
+- knowledge graphs;
+- multi-agent orchestration;
+- model-routing strategies;
+- advanced confidence scoring;
+- automatic quantitative-metric schema;
+- detailed resolution-event history;
+- sophisticated contradiction graph;
+- multi-user authentication;
+- automated résumé generation;
+- background agents;
+- scheduled check-ins.
+
+---
+
+# 38. Open Decisions
+
+The following remain intentionally unresolved:
+
+### OD-1 — LLM provider
+OpenAI vs. Gemini or another appropriate provider.
+
+### OD-2 — Exact document-ingestion strategy
+How PDFs/documents are parsed and how document locations are represented.
+
+### OD-3 — Authentication
+Whether V1 requires user authentication immediately or can begin as a private/local application.
+
+### OD-4 — Google Docs tab API implementation
+Exact API behavior for creating, locating, and appending to document tabs must be verified during implementation.
+
+### OD-5 — Contradiction detection algorithm
+Initial candidate-generation strategy remains to be designed.
+
+### OD-6 — Database enforcement vs. application enforcement
+Determine which cross-table integrity rules should use PostgreSQL constraints/functions/triggers versus application validation.
+
+### OD-7 — Retrieval evolution
+Semantic/vector retrieval remains conditional on observed retrieval failures.
+
+---
+
+# 39. Architecture Decision — ADR-001
+
+## Bounded historical context instead of full-history prompting
+
+**Problem**
+
+The assistant needs historical project knowledge, but passing the entire semester history to the LLM on every request is inefficient and risks burying relevant evidence.
+
+**Decision**
+
+Preserve original Sources and structured Claims/evidence. Construct bounded evidence packets using recent history and relevant structured/project evidence.
+
+**Initial strategy**
+
+Recent check-ins + structured Claims + relevant project documents.
+
+**Deferred**
+
+Semantic/vector retrieval.
+
+**Reasoning**
+
+Use the simplest retrieval mechanism capable of satisfying current requirements. Introduce more sophisticated retrieval only after observing concrete failures.
+
+**Tradeoff**
+
+Early versions may fail to surface older but relevant evidence.
+
+**Mitigation**
+
+Original Sources and provenance are retained, allowing retrieval to improve later without rebuilding historical records.
+
+---
+
+# 40. Definition of V1 Success
+
+V1 is successful when Madie can:
+
+1. initiate a check-in herself;
+2. complete a useful guided reflection;
+3. have the application preserve the original conversation;
+4. extract meaningful, appropriately atomic Claims;
+5. distinguish personal/team/teammate ownership;
+6. trace important Claims back to their evidence;
+7. have contradictions surfaced rather than silently resolved;
+8. personally resolve ambiguous/conflicting information;
+9. receive useful standup notes and a concise reflection;
+10. receive a STAR candidate only when warranted;
+11. review the generated output;
+12. explicitly approve it;
+13. have approved content written to the correct private Google Doc location;
+14. return later and retrieve enough historical evidence to accurately understand what happened.
+
+The system should achieve these goals without requiring autonomous/background behavior or unsupported historical inference.
