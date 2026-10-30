@@ -19,7 +19,7 @@ export default defineConfig({
     include: ["tests/evals/**/*.eval.ts"],
     env,
     silent: false,
-    hookTimeout: 120_000,
+    hookTimeout: 180_000,
     testTimeout: 120_000,
   },
 });

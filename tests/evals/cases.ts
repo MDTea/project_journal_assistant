@@ -91,6 +91,7 @@ export const EVAL_CASES: EvalCase[] = [
     statements: scripted("Worked on documentation.", { completed: "The README got updated." }),
     expect: {
       forbiddenClaims: [{ textIncludes: ["readme"], actorsInclude: ["Madie"] }],
+      outputMustNotMention: ["updated the readme"],
     },
   },
   {

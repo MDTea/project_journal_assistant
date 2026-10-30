@@ -1,4 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
+import { setTimeout as sleep } from "node:timers/promises";
+import OpenAI from "openai";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { reviewClaims, type ReviewedClaim } from "../../src/lib/analysis/integrity";
 import type { CheckInAnalysis } from "../../src/lib/analysis/schema";
@@ -23,14 +25,29 @@ interface CaseReport {
 }
 const report: CaseReport[] = [];
 
-describe.concurrent.each(cases)("$id", (evalCase) => {
+// New OpenAI accounts allow only ~10 requests/minute, so cases run one at a
+// time and wait out rate limits instead of failing.
+async function analyzeWithRetry(statements: Parameters<typeof analyzeCheckIn>[1]) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await analyzeCheckIn("2026-10-29", statements);
+    } catch (err) {
+      const rateLimited = err instanceof OpenAI.APIError && err.status === 429;
+      const outOfCredits = rateLimited && err.code === "insufficient_quota";
+      if (!rateLimited || outOfCredits || attempt >= 6) throw err;
+      await sleep(15_000);
+    }
+  }
+}
+
+describe.each(cases)("$id", (evalCase) => {
   let checks: CheckResult[] = [];
   const entry: CaseReport = { id: evalCase.id, probes: evalCase.probes };
   report.push(entry);
 
   beforeAll(async () => {
     try {
-      const analysis = await analyzeCheckIn("2026-10-29", evalCase.statements);
+      const analysis = await analyzeWithRetry(evalCase.statements);
       const claims = reviewClaims(analysis.claims, evalCase.statements);
       checks = checkExpectations(evalCase.expect, analysis, claims);
       Object.assign(entry, { analysis, claims, checks });

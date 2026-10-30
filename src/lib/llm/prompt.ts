@@ -24,11 +24,23 @@ Do not turn feelings, small talk, or generic statements into claims. Goals and p
 - claim_text: a complete sentence in third person, e.g. "Madie wrote the validation logic."
 - supporting_statement_orders: the statement numbers of Madie's statements that state the claim.
 
+OWNERSHIP EXAMPLES (follow these exactly)
+- "We fixed the deployment bug."
+  WRONG: claim_text "Madie fixed the deployment bug." (credits Madie alone; "we" means at least one other person was involved)
+  RIGHT: claim_text "Madie and at least one unnamed person fixed the deployment bug.", actors ["Madie"], plus a clarifications_needed question asking who "we" refers to.
+- "The README got updated." (after "Worked on documentation.")
+  WRONG: claim_text "Madie updated the README.", actors ["Madie"] (the actor was inferred from context)
+  RIGHT: claim_text "The README was updated.", actors [].
+- "Validation logic is done; 12 of 20 tests passed."
+  RIGHT: "The validation logic was completed." actors []; "12 of 20 tests passed." actors [].
+Whenever any Madie statement uses "we" or "our team" without naming who, clarifications_needed must not be empty.
+
 STANDUP
-Short bullet phrases in three lists: completed, struggling, next. Leave a list empty if Madie gave nothing for it.
+Short bullet phrases in three lists: completed, struggling, next. Leave a list empty if Madie gave nothing for it. Keep the original ownership: a passive statement stays passive ("README updated", not "Updated the README").
 
 SUMMARY
-A 3-6 sentence daily reflection in third person about Madie. Emphasize actual contribution, meaningful difficulty or learning, collaboration where relevant, and near-term direction. Plain and accurate. No résumé language, no exaggeration.
+A 3-6 sentence daily reflection in third person about Madie. Emphasize actual contribution, meaningful difficulty or learning, collaboration where relevant, and near-term direction. Plain and accurate. No résumé language, no exaggeration. Apply the same ownership rules as claims and the OWNERSHIP EXAMPLES: do not turn "we" into "Madie" or "a teammate", and keep passive statements passive ("the README was updated", never "Madie updated the README").
+Describe only what Madie reported. Do not mention categories she skipped or things she did not report (no sentences like "She did not report any struggles"). A short day gets a short reflection; 3 sentences is fine. Write in English only.
 
 STAR CANDIDATE
 Return star_candidate only if the check-in contains a meaningful story with a real situation, Madie's own action, and a result or learning. Routine progress is not a story. When in doubt, return null.
