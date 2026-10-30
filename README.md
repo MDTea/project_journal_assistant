@@ -23,7 +23,8 @@ Requires Node.js 20.9+ (developed on Node 24).
 ```bash
 npm install
 npm run dev      # http://localhost:3000
-npm test         # unit tests (Vitest)
+npm test         # unit tests (Vitest), no network
+npm run eval     # LLM eval set: real OpenAI calls, see Documentation/evaluation.md
 npm run lint
 ```
 
@@ -36,6 +37,7 @@ Documentation/
   ApplicationSpec_v0.1           Product specification (source of truth)
   proj_poe_v0.2_temporarilyfrozen.png   ERD, Schema v0.2 (temporarily frozen)
   milestone-1.md                 Milestone 1 scope and slice plan
+  evaluation.md                  LLM eval set: how to run it, coverage, baseline scores
   decisions/                     Architecture Decision Records (ADRs)
 src/
   app/                           Next.js App Router pages
@@ -46,6 +48,7 @@ src/
   lib/analysis/                  Zod schemas and claim integrity checks
   lib/llm/                       Prompt and the single OpenAI call (server-only)
 tests/                           Vitest unit tests
+  evals/                         LLM eval cases and runner (npm run eval)
 ```
 
 ## Stack
