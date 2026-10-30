@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# LLM eval outputs (may contain test transcripts and model output)
+/tests/evals/results/
