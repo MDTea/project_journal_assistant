@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { AnalyzeResponse } from "@/app/api/analyze/route";
 import { REFLECTION_CATEGORIES } from "@/lib/checkin/categories";
 import { createSession, submitInput } from "@/lib/checkin/flow";
+import AnalysisReview from "./AnalysisReview";
 import styles from "./CheckInChat.module.css";
 
 export default function CheckInChat() {
   const [session, setSession] = useState(createSession);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const inProgress = session.phase === "opening" || session.phase === "categories";
@@ -20,11 +25,30 @@ export default function CheckInChat() {
 
   // Milestone 1 has no persistence, so warn before a reload discards answers.
   useEffect(() => {
-    if (!inProgress) return;
+    if (session.statements.length === 0) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [inProgress]);
+  }, [session.statements.length]);
+
+  async function handleAnalyze() {
+    setAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: session.date, statements: session.statements }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
+      setAnalysis(data as AnalyzeResponse);
+    } catch (err) {
+      setAnalysisError(err instanceof Error ? err.message : "Analysis failed.");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,6 +67,8 @@ export default function CheckInChat() {
     setSession(createSession());
     setDraft("");
     setError(null);
+    setAnalysis(null);
+    setAnalysisError(null);
   }
 
   return (
@@ -106,11 +132,18 @@ export default function CheckInChat() {
               </li>
             ))}
           </ul>
-          <p className={styles.note}>
-            Next slice (1b): send this transcript to the LLM for structured analysis (claims,
-            standup, reflection, optional STAR) and review it here.
-          </p>
+          <div className={styles.actions}>
+            <button type="button" onClick={handleAnalyze} disabled={analyzing}>
+              {analyzing ? "Analyzing…" : analysis ? "Re-analyze" : "Analyze check-in"}
+            </button>
+            <span className={styles.note}>Sends this transcript to OpenAI.</span>
+          </div>
+          {analysisError && <p className={styles.error}>{analysisError}</p>}
         </div>
+      )}
+
+      {isComplete && analysis && (
+        <AnalysisReview result={analysis} statements={session.statements} />
       )}
 
       {session.phase !== "awaiting_start" && (

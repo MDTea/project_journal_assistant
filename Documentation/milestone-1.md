@@ -24,16 +24,42 @@ Milestone 1 is built in three reviewable slices. Each one should run, pass its t
 - The assistant speaker is stored as `"ChatGPT"`, matching the spec's V1 Speaker values. CE-4 applies: assistant statements can never independently establish Madie's ownership.
 - Skip detection is a small fixed list of phrases. An answer like "Nothing new except the ERD" counts as a real answer.
 
-### 1b: Structured analysis (next)
+### 1b: Structured analysis (built; awaiting live verification)
 
-- Server-side route handler calls the OpenAI API. The key is only ever read on the server from `.env.local`.
-- The LLM returns a `CheckInAnalysis` (handoff §15), and a Zod schema validates it before the app uses it:
-  - `claims[]`: `claim_text`, `actors[]`, `verb`, `direct_object`, `context`, `claim_type`, and the supporting `statement_order`(s)
-  - `standup`: `completed`, `struggling`, `next`
-  - `summary`: a 3–6 sentence dated reflection
-  - `star_candidate`: STAR + Learning, or `null` when no meaningful story exists
-- A review screen shows the Claims with their supporting statements, plus the standup, reflection and STAR candidate.
-- Application-level checks: a Claim must cite at least one statement, cited statements must exist, and a Claim supported only by ChatGPT statements is flagged (CE-4).
+```text
+Browser (CheckInChat)                Server (POST /api/analyze)                     OpenAI
+transcript ──────────────────────▶  1. AnalyzeRequestSchema validates the body
+                                     2. buildAnalysisInput() → numbered transcript ─▶ responses.parse
+                                     3. SDK parses the reply with CheckInAnalysisSchema ◀─ JSON
+                                     4. reviewClaims() checks claims vs. transcript
+review screen ◀──────────────────── 5. { analysis, claims (with status + flags) }
+```
+
+| File | Responsibility |
+|---|---|
+| `src/lib/analysis/schema.ts` | Zod schemas: the model's output shape and the request body |
+| `src/lib/llm/prompt.ts` | Instructions and evidence packet (readable, testable) |
+| `src/lib/llm/openai.ts` | The only OpenAI call; `server-only` keeps the key off the client |
+| `src/lib/analysis/integrity.ts` | Deterministic claim checks; assigns `supported` / `unresolved` |
+| `src/app/api/analyze/route.ts` | Route handler wiring the steps together |
+| `src/components/AnalysisReview.tsx` | Review screen |
+
+`CheckInAnalysis` (handoff §15, refined):
+
+- `claims[]`: `claim_text`, `actors[]`, `verb`, `direct_object`, `context`, `claim_type`, `creation_method`, `supporting_statement_orders[]`
+- `standup`: `completed[]`, `struggling[]`, `next[]`
+- `summary`: the 3–6 sentence reflection (the app supplies the date, not the model)
+- `star_candidate`: Situation/Task/Action/Result/Learning, or `null`
+- `clarifications_needed[]`: **added in 1b.** This gives the model somewhere to put ambiguous ownership ("we") instead of guessing. The questions are shown for review; answering them is Milestone 3.
+
+**Integrity rules (enforced in code, not the prompt):**
+
+- Claim status is assigned by the app, never by the model.
+- `supported` requires at least one cited statement that exists **and** was spoken by Madie.
+- Citations to assistant statements are flagged and ignored (CE-4). Citations to non-existent statements are flagged and dropped.
+- A claim with no valid Madie evidence is `unresolved`.
+
+**Model:** defaults to `gpt-5.4-mini`. Override with `OPENAI_MODEL` in `.env.local`. Requests use `store: false`.
 
 ### 1c: Conversational follow-ups (planned)
 

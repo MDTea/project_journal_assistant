@@ -6,12 +6,12 @@ The CIS 591 Journal Assistant is a private, human-controlled AI journaling appli
 
 ## Current status
 
-**Milestone 1, slice 1a: scripted check-in (no LLM yet).**
+**Milestone 1, slice 1b: OpenAI structured analysis.**
 
 | Slice | Scope | Status |
 |---|---|---|
 | 1a | Next.js scaffold, "Start", seven reflection categories asked in order, in-memory transcript, coverage summary | Done |
-| 1b | OpenAI structured analysis (Zod-validated): Claims, standup, reflection, optional STAR, review screen | Next |
+| 1b | OpenAI structured analysis (Zod-validated): Claims, standup, reflection, optional STAR, review screen | Built |
 | 1c | LLM-driven conversation with useful follow-up questions | Planned |
 
 Not in Milestone 1: Supabase, Google Docs, file upload, authentication, background jobs, vector search. See [Documentation/milestone-1.md](Documentation/milestone-1.md).
@@ -27,7 +27,7 @@ npm test         # unit tests (Vitest)
 npm run lint
 ```
 
-Slice 1b will need an OpenAI API key: copy `.env.example` to `.env.local` and fill it in. `.env.local` is git-ignored and must never be committed.
+Analysis needs an OpenAI API key with billing credits: copy `.env.example` to `.env.local` and fill it in. `.env.local` is git-ignored and must never be committed. A ChatGPT subscription (including ChatGPT Edu) does not include API credits.
 
 ## Repository layout
 
@@ -39,8 +39,12 @@ Documentation/
   decisions/                     Architecture Decision Records (ADRs)
 src/
   app/                           Next.js App Router pages
+  app/api/analyze/route.ts       Server route: transcript → OpenAI → checked analysis
   components/CheckInChat.tsx     Check-in chat UI (client component)
+  components/AnalysisReview.tsx  Review screen for the generated analysis
   lib/checkin/                   Pure check-in logic (no React, no I/O)
+  lib/analysis/                  Zod schemas and claim integrity checks
+  lib/llm/                       Prompt and the single OpenAI call (server-only)
 tests/                           Vitest unit tests
 ```
 
