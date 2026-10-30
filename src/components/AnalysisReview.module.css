@@ -1,0 +1,152 @@
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.review section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--surface);
+}
+
+.review h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.review h3 {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+}
+
+.review p {
+  margin: 0;
+}
+
+.review ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.banner {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--assistant-bubble);
+  font-size: 0.8125rem;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.standup {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  font-size: 0.875rem;
+}
+
+.star {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.star dt {
+  font-weight: 600;
+}
+
+.star dd {
+  margin: 0;
+}
+
+.claims {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.claim {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.claim:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.claimHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.supported,
+.unresolved {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.supported {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.unresolved {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.claimMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.evidence {
+  margin: 4px 0 0;
+  padding: 4px 10px;
+  border-left: 3px solid var(--accent);
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.evidence span {
+  font-weight: 600;
+}
+
+.flag {
+  margin-top: 4px !important;
+  color: var(--error);
+  font-size: 0.8125rem;
+}
+
+.raw summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.raw pre {
+  overflow-x: auto;
+  font-size: 0.75rem;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
